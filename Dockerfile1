@@ -1,0 +1,33 @@
+# Koristi go sliku kao osnovu
+FROM golang:1.20.2-alpine AS base
+
+# Postavlja radni direktorij na /app
+WORKDIR /app
+
+# Dodaje go.mod i go.sum datoteke u Docker image
+COPY go.mod ./
+#COPY go.sum ./
+
+# Preuzima sve potrebne Go pakete
+#RUN go mod download
+
+# Kopira test.go datoteku u Docker image
+COPY *.go ./
+
+# Kompilira test.go u izvršni program
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -o simple .
+RUN chmod 777 /app/simple
+
+
+# Use distroless as minimal base image to package the manager binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM gcr.io/distroless/static:nonroot
+COPY --from=base /app /app
+
+
+# Postavlja naredbu za pokretanje
+CMD [ "/app/simple" ]
+#CMD [ "sleep 1000" ]
+
+#ENTRYPOINT ["/testgo"]
+
